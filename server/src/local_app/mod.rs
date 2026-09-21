@@ -11,10 +11,7 @@ use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 
-use crate::{
-    store::{Store, TabMode, TabSettings},
-    Error, Result,
-};
+use crate::{store::Store, Error, Result};
 
 use self::{ca::CaManager, proxy::ProxyRuntime};
 
@@ -78,7 +75,6 @@ struct Inner {
     ca: CaManager,
     ca_initialization: Mutex<()>,
     backend_addr: RwLock<Option<SocketAddr>>,
-    tab_mode: Arc<RwLock<TabMode>>,
     proxy: Mutex<ProxyRuntime>,
 }
 
@@ -90,7 +86,6 @@ impl CursorHarness {
                 ca: CaManager::managed()?,
                 ca_initialization: Mutex::new(()),
                 backend_addr: RwLock::new(None),
-                tab_mode: Arc::new(RwLock::new(TabMode::default())),
                 proxy: Mutex::new(ProxyRuntime::default()),
             }),
         })
@@ -163,12 +158,6 @@ impl CursorHarness {
         self.status().await
     }
 
-    pub async fn set_tab_settings(&self, settings: TabSettings) -> Result<TabSettings> {
-        let saved = self.inner.store.set_tab_settings(settings).await?;
-        *self.inner.tab_mode.write() = saved.mode;
-        Ok(saved)
-    }
-
     async fn enable(&self) -> Result<()> {
         if !matches!(self.inner.ca.state()?, CaState::Ready) {
             return Err(Error::Config(
@@ -202,14 +191,8 @@ impl CursorHarness {
         }
         let ca = self.inner.ca.load()?;
         let requested_port = self.inner.store.port_settings().await?.proxy_port;
-        *self.inner.tab_mode.write() = self.inner.store.tab_settings().await?.mode;
         let (url, actual_port) = proxy
-            .start(
-                backend_addr,
-                ca,
-                requested_port,
-                self.inner.tab_mode.clone(),
-            )
+            .start(backend_addr, ca, requested_port)
             .await?;
         if let Err(error) = self.inner.store.set_proxy_port(actual_port).await {
             proxy.stop().await;

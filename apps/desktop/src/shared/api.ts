@@ -1,4 +1,3 @@
-import type { AdRuntime } from "../shell/ads/types";
 import type { CommitPromptLocale, Locale } from "../i18n/runtime";
 
 export type ModelType = "openai" | "anthropic";
@@ -136,13 +135,6 @@ export interface ProxySettingsInput {
   auth_enabled: boolean;
   username: string;
   password?: string;
-}
-
-export type TabMode = "public" | "direct" | "custom";
-
-export interface TabSettings {
-  mode: TabMode;
-  address: string;
 }
 
 export interface DesktopSettings {
@@ -471,16 +463,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  ads: (disabledAdIds: Iterable<string>, locale: Locale) => {
-    const value = [...disabledAdIds].join(",");
-    return request<AdRuntime>("/promotions", {
-      headers: {
-        "accept-language": locale,
-        ...(value ? { "disable-ad-ids": value } : {}),
-      },
-    });
-  },
-  dismissAd: (id: string, reason: string) => request<void>(`/promotions/${encodeURIComponent(id)}/dismissals`, { method: "POST", body: JSON.stringify({ reason }) }),
   models: () => request<Model[]>("/models"),
   createModels: (models: ModelInput[]) => request<Model[]>("/models", { method: "POST", body: JSON.stringify({ models }) }),
   reorderModels: (modelHashes: string[]) => request<Model[]>("/models/order", { method: "PUT", body: JSON.stringify({ model_hashes: modelHashes }) }),
@@ -545,8 +527,6 @@ export const api = {
   clearStatisticsStorage: (scope: StatisticsStorageScope) => request<StatisticsStorage>("/settings/storage/statistics", { method: "DELETE", body: JSON.stringify({ scope }) }),
   proxySettings: () => request<ProxySettings>("/settings/proxy"),
   setProxySettings: (settings: ProxySettingsInput) => request<ProxySettings>("/settings/proxy", { method: "PUT", body: JSON.stringify(settings) }),
-  tabSettings: () => request<TabSettings>("/settings/tab"),
-  setTabSettings: (settings: TabSettings) => request<TabSettings>("/settings/tab", { method: "PUT", body: JSON.stringify(settings) }),
   desktopSettings: () => request<DesktopSettings>("/settings/desktop"),
   setDesktopSettings: (settings: DesktopSettings) => request<DesktopSettings>("/settings/desktop", { method: "PUT", body: JSON.stringify(settings) }),
   commitSettings: (locale: Locale) => request<CommitSettingsView>("/settings/commit", { headers: { "accept-language": locale } }),

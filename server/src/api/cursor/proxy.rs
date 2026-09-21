@@ -62,22 +62,10 @@ pub async fn forward(
     Extension(proxy): Extension<CursorProxy>,
     request: Request<Body>,
 ) -> Result<Response<Body>> {
-    forward_request(&proxy, request, None).await
+    forward_request(&proxy, request).await
 }
 
-pub(crate) async fn forward_to_service(
-    proxy: &CursorProxy,
-    request: Request<Body>,
-    service_url: &str,
-) -> Result<Response<Body>> {
-    forward_request(proxy, request, Some(service_url)).await
-}
-
-async fn forward_request(
-    proxy: &CursorProxy,
-    request: Request<Body>,
-    service_url: Option<&str>,
-) -> Result<Response<Body>> {
+async fn forward_request(proxy: &CursorProxy, request: Request<Body>) -> Result<Response<Body>> {
     let started = Instant::now();
     let (parts, body) = request.into_parts();
     let path = parts
@@ -85,10 +73,7 @@ async fn forward_request(
         .path_and_query()
         .map_or("/", |value| value.as_str())
         .to_owned();
-    let url = match service_url {
-        Some(service_url) => format!("{}{}", service_url.trim_end_matches('/'), path),
-        None => upstream_url(&parts.headers, &proxy.upstream, &path)?,
-    };
+    let url = upstream_url(&parts.headers, &proxy.upstream, &path)?;
 
     let mut headers = parts.headers;
     headers.remove(UPSTREAM_URL_HEADER);

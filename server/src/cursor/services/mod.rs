@@ -11,5 +11,4 @@ pub mod knowledge;
 pub mod model_catalog;
 pub mod observability;
 pub mod server_config;
-pub mod tab;
 pub mod usage;

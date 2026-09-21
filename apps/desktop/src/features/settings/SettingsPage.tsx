@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
-import { api, type ProxySettings, type ProxySettingsInput, type StatisticsStorage, type StatisticsStorageScope, type TabSettings } from "../../shared/api";
+import { api, type ProxySettings, type ProxySettingsInput, type StatisticsStorage, type StatisticsStorageScope } from "../../shared/api";
 import { PageContent } from "../../shell/layout/PageContent";
 import { LegacyModelImport } from "../models/LegacyModelImport";
 import { AppLifecycleSettingsCard } from "./AppLifecycleSettingsCard";
 import { CommitSettingsCard } from "./CommitSettingsCard";
 import { PricingSettingsCard } from "./PricingSettingsCard";
 import { ProxySettingsCard } from "./ProxySettingsCard";
-import { TabSettingsCard } from "./TabSettingsCard";
 import { Button } from "../../shared/ui/Button";
 import { Checkbox } from "../../shared/ui/Checkbox";
 import { ConfirmDialog } from "../../shared/ui/ConfirmDialog";
@@ -35,20 +34,12 @@ export function SettingsPage() {
   const [proxyDraft, setProxyDraft] = useState<ProxySettingsInput>({ mode: "default", address: "", auth_enabled: false, username: "", password: "" });
   const [editingProxy, setEditingProxy] = useState(false);
   const [savingProxy, setSavingProxy] = useState(false);
-  const [tabSettings, setTabSettings] = useState<TabSettings | null>(null);
-  const [tabDraft, setTabDraft] = useState<TabSettings>({ mode: "public", address: "" });
-  const [editingTab, setEditingTab] = useState(false);
-  const [savingTab, setSavingTab] = useState(false);
   useEffect(() => {
     const report = (cause: unknown) => message(cause instanceof Error ? cause.message : String(cause));
     void api.statisticsStorage().then(setStorage).catch(report);
     void api.proxySettings().then((next) => {
       setOutboundProxy(next);
       setProxyDraft({ mode: next.mode, address: next.address, auth_enabled: next.auth_enabled, username: next.username, password: "" });
-    }).catch(report);
-    void api.tabSettings().then((next) => {
-      setTabSettings(next);
-      setTabDraft(next);
     }).catch(report);
   }, [message]);
   useEffect(() => {
@@ -128,30 +119,6 @@ export function SettingsPage() {
       setSavingProxy(false);
     }
   };
-  const editTab = () => {
-    if (!tabSettings) return;
-    setTabDraft(tabSettings);
-    setEditingTab(true);
-  };
-  const cancelTabEdit = () => {
-    if (tabSettings) setTabDraft(tabSettings);
-    setEditingTab(false);
-  };
-  const saveTab = async () => {
-    try {
-      if (tabDraft.mode === "custom" && !tabDraft.address.trim()) throw new Error(t("TAB 服务地址不能为空"));
-      setSavingTab(true);
-      const saved = await api.setTabSettings({ ...tabDraft, address: tabDraft.address.trim() });
-      setTabSettings(saved);
-      setTabDraft(saved);
-      setEditingTab(false);
-      message(t("TAB 设置已保存"));
-    } catch (cause) {
-      message(cause instanceof Error ? cause.message : String(cause));
-    } finally {
-      setSavingTab(false);
-    }
-  };
   const clearTitle = clearScope === "all" ? t("确定要清理全部统计数据吗？") : t("确定要清理详细记录吗？");
   const clearDescription = clearScope === "all"
     ? t("所有调用汇总、详细内容和追踪记录都会被删除。模型配置、CA 和应用设置不会受到影响，此操作无法撤销。")
@@ -225,7 +192,6 @@ export function SettingsPage() {
         </div>
       </TitledCard>
       <ProxySettingsCard settings={outboundProxy} draft={proxyDraft} editing={editingProxy} saving={savingProxy} onDraftChange={setProxyDraft} onEdit={editProxy} onCancel={cancelProxyEdit} onSave={() => void saveProxy()} />
-      <TabSettingsCard settings={tabSettings} draft={tabDraft} editing={editingTab} saving={savingTab} onDraftChange={setTabDraft} onEdit={editTab} onCancel={cancelTabEdit} onSave={() => void saveTab()} />
       <CommitSettingsCard />
       <PricingSettingsCard />
       <AppLifecycleSettingsCard />

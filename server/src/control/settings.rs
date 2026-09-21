@@ -9,8 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::store::{
     CommitPromptLocale, CommitSettings, DesktopSettings, PortSettings, ProxySettings,
-    ProxySettingsInput, StatisticsStorage, StatisticsStorageScope, TabSettings,
-    TokenPricingSettings,
+    ProxySettingsInput, StatisticsStorage, StatisticsStorageScope, TokenPricingSettings,
 };
 
 use super::{ControlService, ObservabilitySettings};
@@ -68,17 +67,6 @@ pub async fn update_proxy(
     Json(settings): Json<ProxySettingsInput>,
 ) -> Result<Json<ProxySettings>> {
     Ok(Json(service.set_proxy_settings(settings).await?))
-}
-
-pub async fn get_tab(State(service): State<ControlService>) -> Result<Json<TabSettings>> {
-    Ok(Json(service.tab_settings().await?))
-}
-
-pub async fn update_tab(
-    State(service): State<ControlService>,
-    Json(settings): Json<TabSettings>,
-) -> Result<Json<TabSettings>> {
-    Ok(Json(service.set_tab_settings(settings).await?))
 }
 
 pub async fn get_desktop(State(service): State<ControlService>) -> Result<Json<DesktopSettings>> {

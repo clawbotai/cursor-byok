@@ -21,7 +21,7 @@ use crate::{
         },
         services::{
             account, analytics, commit_message, compatibility, entitlement::FreeEntitlementCache,
-            knowledge, model_catalog, server_config, tab,
+            knowledge, model_catalog, server_config,
         },
         transport::{TransportParent, TransportRegistry},
     },
@@ -155,7 +155,6 @@ fn router_with_proxy(
         )
         .route("/auth/full_stripe_profile", get(account::stripe_profile))
         .route("/auth/stripe_profile", get(account::stripe_profile))
-        .merge(tab::router())
         .route_layer(DefaultBodyLimit::disable())
         .route_layer(RequestDecompressionLayer::new())
         .fallback(proxy::forward)
