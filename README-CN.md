@@ -101,6 +101,8 @@ Cursor 的 Tab 补全由独立的 TAB 服务处理，不经过模型通道。你
 
 ## 数据流转
 
+Moss 等其他本机客户端也可通过服务端口的 OpenAI Chat Completions 入口复用已配置插件模型，见 [本机模型 API](./MODEL_API_CN.md)。
+
 ```text
 Cursor 客户端
     │

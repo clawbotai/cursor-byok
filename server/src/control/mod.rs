@@ -2,6 +2,7 @@
 mod calls;
 mod harness;
 mod models;
+mod model_api;
 mod overview;
 mod plugins;
 mod service;
@@ -110,6 +111,8 @@ fn proxy_error(error: impl std::fmt::Display) -> Response<Body> {
 
 pub fn api_router(service: ControlService) -> Router {
     Router::new()
+        .route("/v1/models", get(model_api::list))
+        .route("/v1/chat/completions", post(model_api::chat))
         .route(
             "/__byok-api__/api/models",
             get(models::list).post(models::create),

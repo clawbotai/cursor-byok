@@ -177,6 +177,13 @@ function enforceUppercaseTypes(value: unknown): unknown {
   if (value === null || typeof value !== "object") return value;
   const out: Record<string, unknown> = {};
   for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+    if (key === "properties" && child && typeof child === "object" && !Array.isArray(child)) {
+      // Property names are user fields, even when named title, type, or format.
+      out[key] = Object.fromEntries(
+        Object.entries(child).map(([name, schema]) => [name, enforceUppercaseTypes(schema)]),
+      );
+      continue;
+    }
     if (UNSUPPORTED_SCHEMA_KEYS[key]) continue;
     if (key === "type" && typeof child === "string") {
       out[key] = PROTO_TYPE_MAP[child.toLowerCase()] ?? child.toUpperCase();
@@ -351,7 +358,7 @@ async function streamCloudCode(
       ...(tools ? { tools } : {}),
       ...(toolConfig ? { toolConfig } : {}),
       generationConfig: {
-        maxOutputTokens: 65536,
+        maxOutputTokens: input.request.maxOutputTokens ?? 65536,
       },
     },
   };

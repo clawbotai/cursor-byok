@@ -144,3 +144,40 @@ Deno.test("isQuotaError identifies rate limits and quota exhaustion", () => {
   assert(isQuotaError("HTTP 429 Too Many Requests"));
   assert(!isQuotaError("Invalid authorization header"));
 });
+
+Deno.test("Antigravity forwards the caller output budget instead of reserving 65536 tokens", async () => {
+  let budget: unknown;
+  const input = request();
+  input.maxOutputTokens = 1024;
+  const result = await antigravityProvider.invoke({
+    model: { id: "gemini-3.8-flash-high", displayName: "Gemini 3.8", privateData: {} },
+    resource: snapshot({ accessToken: "test", refreshToken: null, expiresAtMs: Date.now() + 3600000, projectId: "test-project" }),
+    request: input,
+  }, { emit() {} }, context({ stream: (_url, init) => {
+    budget = JSON.parse(init!.body!).request.generationConfig.maxOutputTokens;
+    return { status: 200, headers: {}, lines: sse(['data: {"response":{"candidates":[{"content":{"parts":[{"text":"OK"}]},"finishReason":"STOP"}]}}']) };
+  } }));
+  assertEquals(result.status, "completed");
+  assertEquals(budget, 1024);
+});
+
+Deno.test("Antigravity preserves tool property names that also name schema keywords", async () => {
+  let parameters: any;
+  const input = request();
+  input.tools = [{ name: "workflow", description: "Declare phases", parameters: {
+    type: "object", properties: { phases: { type: "array", items: {
+      type: "object", properties: { title: { type: "string", title: "Phase title" }, type: { type: "string" } }, required: ["title"],
+    } } },
+  } }];
+  await antigravityProvider.invoke({
+    model: { id: "gemini-3.8-flash-high", displayName: "Gemini 3.8", privateData: {} },
+    resource: snapshot({ accessToken: "test", expiresAtMs: Date.now() + 3600000, projectId: "test-project" }),
+    request: input,
+  }, { emit() {} }, context({ stream: (_url, init) => {
+    parameters = JSON.parse(init!.body!).request.tools[0].functionDeclarations[0].parameters;
+    return { status: 200, headers: {}, lines: sse(['data: {"response":{"candidates":[{"content":{"parts":[{"text":"OK"}]},"finishReason":"STOP"}]}}']) };
+  } }));
+  assertEquals(parameters.properties.phases.items.properties.title, { type: "STRING" });
+  assertEquals(parameters.properties.phases.items.properties.type, { type: "STRING" });
+  assertEquals(parameters.properties.phases.items.required, ["title"]);
+});
