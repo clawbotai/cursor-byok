@@ -24,13 +24,15 @@ impl Provider for NoInference {
 async fn standard_model_catalog_is_available_without_exposing_credentials() {
     let store = Store::connect("sqlite::memory:").await.unwrap();
     let runtime = PluginRuntime::managed().unwrap();
-    let registry = PluginRegistry::managed(store.clone(), runtime.clone(), "1.0.1".into()).unwrap();
+    let clients = NetworkClients::new(store.clone());
+    let registry =
+        PluginRegistry::managed(runtime.clone(), "1.0.1".into(), clients.clone()).unwrap();
     let service = ControlService::new(
         store.clone(),
         Arc::new(NoInference),
         runtime,
         registry,
-        NetworkClients::new(store),
+        clients,
     )
     .unwrap();
     let response = api_router(service)

@@ -20,7 +20,7 @@ import {
   accountData,
   isTokenExpired,
   quotaExhaustedPatch,
-  refreshAccount,
+  refreshAccessToken,
   RESOURCE_TYPE,
 } from "./resources.ts";
 
@@ -560,7 +560,7 @@ async function streamCloudCode(
             (hasTools || parts?.some((p) => p.functionCall));
           output.emit({
             type: "done",
-            reason: isTool ? "tool-use" : "stop",
+            reason: isTool ? "tool-use" : finishReason === "MAX_TOKENS" ? "length" : "stop",
           });
           doneEmitted = true;
           break;
@@ -593,16 +593,16 @@ async function streamCloudCode(
           },
         });
       }
-      if (!doneEmitted) {
-        output.emit({
-          type: "done",
-          reason: hasTools ? "tool-use" : "stop",
-        });
-      }
+      if (!doneEmitted) throw new Error("Antigravity stream ended before a finish reason");
       return;
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
-      if (hasEmittedAnyChunk) {
+      lastError.message += ` (${endpoint})`;
+      if (
+        hasEmittedAnyChunk || context.signal.aborted ||
+        (lastError instanceof HttpError &&
+          lastError.status !== 404 && lastError.status !== 408 && lastError.status < 500)
+      ) {
         throw lastError;
       }
     }
@@ -631,72 +631,47 @@ async function invoke(
   }
 
   let patchData: AccountData | null = null;
+  let needsRefresh = Boolean(data.refreshToken && isTokenExpired(data));
 
-  // Auto-refresh token if expired or close to expiration (skew 5 mins)
-  if (data.refreshToken && isTokenExpired(data)) {
+  for (;;) {
     try {
-      const refreshed = await refreshAccount(input.resource, context);
-      if (refreshed.privateData) {
+      if (needsRefresh) {
+        const refreshed = await refreshAccessToken(input.resource, context);
+        if (refreshed.state?.status === "invalid") {
+          return { status: "resource-error", message: refreshed.state.message!, patch: refreshed };
+        }
         data = refreshed.privateData as unknown as AccountData;
         patchData = data;
       }
-    } catch {
-      // Continue with existing token
-    }
-  }
-
-  let projectId = data.projectId ?? "bamboo-precept-lgxtn";
-
-  try {
-    await streamCloudCode(data.accessToken, projectId, input.model.id, input, output, context);
-    return patchData
-      ? {
+      await streamCloudCode(
+        data.accessToken,
+        data.projectId!,
+        input.model.id,
+        input,
+        output,
+        context,
+      );
+      return {
         status: "completed",
-        patch: { privateData: patchData as unknown as JsonValue, state: { status: "ready" } },
+        ...(patchData
+          ? { patch: { privateData: patchData as unknown as JsonValue, state: { status: "ready" as const } } }
+          : {}),
+      };
+    } catch (error) {
+      if (error instanceof HttpError && error.status === 401 && data.refreshToken && !needsRefresh) {
+        needsRefresh = true;
+        continue;
       }
-      : { status: "completed" };
-  } catch (error) {
-    if (error instanceof HttpError) {
-      if (
-        (error.status === 401 || error.status === 403) && data.refreshToken &&
-        !isQuotaHttpError(error)
-      ) {
-        try {
-          const refreshed = await refreshAccount(input.resource, context);
-          if (refreshed.privateData) {
-            const freshData = refreshed.privateData as unknown as AccountData;
-            const freshProj = freshData.projectId ?? projectId;
-            await streamCloudCode(
-              freshData.accessToken,
-              freshProj,
-              input.model.id,
-              input,
-              output,
-              context,
-            );
-            return {
-              status: "completed",
-              patch: { privateData: freshData as unknown as JsonValue, state: { status: "ready" } },
-            };
-          }
-        } catch {
-          // Failed refresh
-        }
+      const message = error instanceof Error ? error.message : String(error);
+      if (error instanceof HttpError ? isQuotaHttpError(error) : isQuotaError(message)) {
+        return { status: "resource-error", message, patch: quotaExhaustedPatch(data, message) };
       }
-      if (isQuotaHttpError(error)) {
-        return {
-          status: "resource-error",
-          message: error.message,
-          patch: quotaExhaustedPatch(data, error.body),
-        };
-      }
-      return { status: "request-error", message: error.message };
+      return {
+        status: "request-error",
+        message,
+        ...(patchData ? { patch: { privateData: patchData as unknown as JsonValue } } : {}),
+      };
     }
-    const message = error instanceof Error ? error.message : String(error);
-    if (isQuotaError(message)) {
-      return { status: "resource-error", message, patch: quotaExhaustedPatch(data, message) };
-    }
-    return { status: "request-error", message };
   }
 }
 

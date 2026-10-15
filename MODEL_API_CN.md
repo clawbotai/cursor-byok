@@ -34,4 +34,6 @@ API 基础地址示例为 `http://127.0.0.1:50566/v1`，协议选择 `openai-com
 
 这不是全部 OpenAI API 的实现：不提供 Responses API，不代理远程图片下载，不透传其他采样参数，也不列出内置 API Key 模型。
 Google 插件 0.1.10 透传调用方输出预算，并保留工具参数中 `title`、`type` 等与 Schema 关键字同名的属性。
+Google 插件 0.1.12 将自动令牌刷新与额度查询分开；地区、认证和限流错误保留原始状态，不再被后续端点的连接错误覆盖；流缺少结束原因时明确报错，输出预算耗尽时返回 `length`。
+访问 Antigravity 使用的是 Google Cloud Code 接口，不经过 Gemini 网页。系统代理需要覆盖 `cloudcode-pa.googleapis.com`、`daily-cloudcode-pa.googleapis.com`、`daily-cloudcode-pa.sandbox.googleapis.com` 和 `oauth2.googleapis.com`；网页可用不能代替这些接口的连通性与地区校验。
 上游模型可用性、认证和额度仍由对应服务决定。

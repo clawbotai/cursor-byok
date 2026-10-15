@@ -22,7 +22,7 @@ use super::{
     definition::{file_url, PluginDefinitionLoader},
     protocol::{HostMessage, WorkerMessage},
 };
-use crate::{provider::CallRecorder, store::Store, Error, Result};
+use crate::{provider::CallRecorder, Error, Result};
 
 const INVOCATION_TIMEOUT: Duration = Duration::from_secs(10 * 60);
 const MAX_NETWORK_RESPONSE_BYTES: u64 = 16 * 1024 * 1024;
@@ -80,7 +80,7 @@ impl InvocationState {
 struct HostContext {
     plugin_id: String,
     network_hosts: Arc<HashSet<String>>,
-    store: Store,
+    clients: crate::network::NetworkClients,
     invocations: Arc<Mutex<HashMap<String, Arc<InvocationState>>>>,
     streams: Arc<Mutex<HashMap<String, StreamLines>>>,
 }
@@ -90,7 +90,7 @@ impl PluginWorker {
         plugin: &PluginEntry,
         executable: PathBuf,
         loader: PluginDefinitionLoader,
-        store: Store,
+        clients: crate::network::NetworkClients,
     ) -> Self {
         let plugin_id = plugin.manifest.id.clone();
         Self {
@@ -106,7 +106,7 @@ impl PluginWorker {
                             .map(|host| host.to_ascii_lowercase())
                             .collect(),
                     ),
-                    store,
+                    clients,
                     invocations: Arc::new(Mutex::new(HashMap::new())),
                     streams: Arc::new(Mutex::new(HashMap::new())),
                 },
@@ -497,11 +497,7 @@ impl HostContext {
             .unwrap_or("GET")
             .parse::<reqwest::Method>()
             .map_err(|error| Error::Config(format!("invalid plugin HTTP method: {error}")))?;
-        let client = crate::network::client_builder(&self.store)
-            .await?
-            .redirect(reqwest::redirect::Policy::none())
-            .connect_timeout(Duration::from_secs(30))
-            .build()?;
+        let client = self.clients.plugin_client().await?;
         let mut request = client.request(method, url);
         if let Some(headers) = params.get("headers").and_then(serde_json::Value::as_object) {
             for (name, value) in headers {
@@ -788,7 +784,7 @@ mod tests {
         HostContext {
             plugin_id: "test".into(),
             network_hosts: Arc::new(HashSet::from(["example.com".into()])),
-            store,
+            clients: crate::network::NetworkClients::new(store),
             invocations,
             streams: Arc::new(Mutex::new(HashMap::new())),
         }

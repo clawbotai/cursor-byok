@@ -27,7 +27,6 @@ use crate::{
     model::ModelInvocation,
     provider::ProviderStream,
     provider::{CallRecorder, ModelEvent},
-    store::Store,
     Error, Result,
 };
 
@@ -40,7 +39,7 @@ pub struct PluginRegistry {
 }
 
 struct RegistryInner {
-    store: Store,
+    clients: crate::network::NetworkClients,
     runtime: PluginRuntime,
     catalog: PluginCatalog,
     state: PluginStateStore,
@@ -133,11 +132,15 @@ pub struct PluginInvocationPlan {
 }
 
 impl PluginRegistry {
-    pub fn managed(store: Store, runtime: PluginRuntime, app_version: String) -> Result<Self> {
+    pub fn managed(
+        runtime: PluginRuntime,
+        app_version: String,
+        clients: crate::network::NetworkClients,
+    ) -> Result<Self> {
         let data = PluginDataStore::managed()?;
         Ok(Self {
             inner: Arc::new(RegistryInner {
-                store,
+                clients,
                 runtime,
                 catalog: PluginCatalog::managed(app_version)?,
                 state: PluginStateStore::new(data),
@@ -1272,7 +1275,7 @@ impl PluginRegistry {
                     entry,
                     executable.to_path_buf(),
                     self.inner.catalog.loader().clone(),
-                    self.inner.store.clone(),
+                    self.inner.clients.clone(),
                 ))
             })
             .clone()

@@ -21,6 +21,7 @@ pub struct NetworkClients {
 struct ClientCache {
     default: Option<reqwest::Client>,
     cursor: Option<reqwest::Client>,
+    plugin: Option<reqwest::Client>,
     provider: Option<(Duration, reqwest::Client)>,
 }
 
@@ -58,6 +59,23 @@ impl NetworkClients {
             .redirect(reqwest::redirect::Policy::none())
             .build()?;
         cache.cursor = Some(client.clone());
+        Ok(client)
+    }
+
+    pub async fn plugin_client(&self) -> Result<reqwest::Client> {
+        if let Some(client) = self.cache.read().await.plugin.clone() {
+            return Ok(client);
+        }
+        let mut cache = self.cache.write().await;
+        if let Some(client) = cache.plugin.clone() {
+            return Ok(client);
+        }
+        let client = client_builder(&self.store)
+            .await?
+            .redirect(reqwest::redirect::Policy::none())
+            .connect_timeout(Duration::from_secs(30))
+            .build()?;
+        cache.plugin = Some(client.clone());
         Ok(client)
     }
 
@@ -181,6 +199,83 @@ mod tests {
         assert!(reject_self_proxy("http://127.0.0.1:7890", 15721).is_ok());
         assert!(reject_self_proxy("http://192.168.1.2:15721", 15721).is_ok());
         assert!(reject_self_proxy("http://127.0.0.1:15721", 0).is_ok());
+    }
+
+    #[tokio::test]
+    async fn plugin_requests_reuse_connections_until_proxy_settings_are_invalidated() {
+        use axum::{extract::ConnectInfo, routing::get, Router};
+        use std::net::SocketAddr;
+
+        let directory = tempfile::tempdir().unwrap();
+        let store = Store::connect(&format!(
+            "sqlite://{}",
+            directory.path().join("test.db").display()
+        ))
+        .await
+        .unwrap();
+        store
+            .set_proxy_settings(crate::store::ProxySettingsInput {
+                mode: ProxyMode::Custom,
+                address: "http://127.0.0.1:9".into(),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+        let clients = NetworkClients::new(store);
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("http://{}/", listener.local_addr().unwrap());
+        let app = Router::new().route(
+            "/",
+            get(|ConnectInfo(peer): ConnectInfo<SocketAddr>| async move { peer.to_string() }),
+        );
+        let server = tokio::spawn(async move {
+            axum::serve(
+                listener,
+                app.into_make_service_with_connect_info::<SocketAddr>(),
+            )
+            .await
+            .unwrap();
+        });
+        let first = clients
+            .plugin_client()
+            .await
+            .unwrap()
+            .get(&url)
+            .send()
+            .await
+            .unwrap()
+            .text()
+            .await
+            .unwrap();
+        let second = clients
+            .plugin_client()
+            .await
+            .unwrap()
+            .get(&url)
+            .send()
+            .await
+            .unwrap()
+            .text()
+            .await
+            .unwrap();
+        assert_eq!(first, second, "plugin requests opened a new connection");
+        clients.invalidate().await;
+        let third = clients
+            .plugin_client()
+            .await
+            .unwrap()
+            .get(&url)
+            .send()
+            .await
+            .unwrap()
+            .text()
+            .await
+            .unwrap();
+        assert_ne!(
+            first, third,
+            "proxy changes kept the previous connection pool"
+        );
+        server.abort();
     }
 
     #[tokio::test]

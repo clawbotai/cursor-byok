@@ -39,12 +39,12 @@ impl App {
         let assets = PromptAssets::embedded()?;
         let compiler = PromptCompiler::new(assets);
         let plugin_runtime = PluginRuntime::managed()?;
+        let clients = crate::network::NetworkClients::new(store.clone());
         let plugins = PluginRegistry::managed(
-            store.clone(),
             plugin_runtime.clone(),
             config.app_version.clone(),
+            clients.clone(),
         )?;
-        let clients = crate::network::NetworkClients::new(store.clone());
         let provider = std::sync::Arc::new(ProviderRouter::new(
             store.clone(),
             plugins.clone(),

@@ -16,6 +16,7 @@ import {
   ANTIGRAVITY_USER_AGENT,
 } from "./models.ts";
 import { CLIENT_ID, CLIENT_SECRET } from "./google_oauth.ts";
+import { HttpError } from "cursor-byok:protocol/openai-chat";
 
 export const RESOURCE_TYPE = "antigravity-account";
 
@@ -371,14 +372,13 @@ export function presentAccount(resource: ResourceSnapshot): ResourceView {
   };
 }
 
-export async function refreshAccount(
+export async function refreshAccessToken(
   resource: ResourceSnapshot,
   context: PluginContext,
 ): Promise<ResourcePatch> {
   const data = accountData(resource);
   let accessToken = data.accessToken;
   let refreshToken = data.refreshToken;
-  let projectId = data.projectId ?? "bamboo-precept-lgxtn";
   let expiresAtMs = data.expiresAtMs ?? null;
 
   if (refreshToken) {
@@ -407,34 +407,41 @@ export async function refreshAccount(
           },
         };
       }
-      // On network glitches or temporary Google server errors, keep ready
-      return {
-        state: { status: "ready" },
-      };
+      throw new HttpError(response.status, response.body);
     }
 
     const body = object(JSON.parse(response.body));
-    accessToken = text(body?.access_token) ?? accessToken;
+    const freshToken = text(body?.access_token);
+    if (!freshToken) throw new Error("Google token response did not include an access token");
+    accessToken = freshToken;
     refreshToken = text(body?.refresh_token) ?? refreshToken;
     const expiresIn = typeof body?.expires_in === "number" ? body.expires_in : 3600;
     expiresAtMs = Date.now() + expiresIn * 1000;
   }
 
-  // Fetch real-time quota and project ID
-  const result = await queryAccountQuota(accessToken, context.network);
-  projectId = result.projectId || projectId;
-
   const updatedData: AccountData = {
     ...data,
     accessToken,
     refreshToken,
-    projectId,
     expiresAtMs,
-    quota: result.quota ?? data.quota,
   };
   return {
     privateData: updatedData as unknown as JsonValue,
     state: { status: "ready" },
+  };
+}
+
+export async function refreshAccount(
+  resource: ResourceSnapshot,
+  context: PluginContext,
+): Promise<ResourcePatch> {
+  const patch = await refreshAccessToken(resource, context);
+  if (!patch.privateData) return patch;
+  const data = patch.privateData as unknown as AccountData;
+  const result = await queryAccountQuota(data.accessToken, context.network);
+  return {
+    ...patch,
+    privateData: { ...data, projectId: result.projectId, quota: result.quota } as unknown as JsonValue,
   };
 }
 
