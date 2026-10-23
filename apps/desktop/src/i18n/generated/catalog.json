@@ -2281,17 +2281,15 @@
         }
       ]
     },
-    "5d59857bf039cac9": {
-      "source": "Cursor 助手 v{version}",
-      "kind": "template",
-      "placeholders": [
-        "version"
-      ],
+    "5ee90ae66a755084": {
+      "source": "登录系统后自动启动 Modweft。",
+      "kind": "text",
+      "placeholders": [],
       "refs": [
         {
-          "file": "shell/AppHeader.tsx",
-          "line": 34,
-          "column": 18
+          "file": "features/settings/AppLifecycleSettingsCard.tsx",
+          "line": 116,
+          "column": 17
         }
       ]
     },
@@ -4801,18 +4799,6 @@
           "file": "features/plugins/PluginManagementPage.tsx",
           "line": 188,
           "column": 20
-        }
-      ]
-    },
-    "d34335433395cd3a": {
-      "source": "登录系统后自动启动 Cursor BYOK。",
-      "kind": "text",
-      "placeholders": [],
-      "refs": [
-        {
-          "file": "features/settings/AppLifecycleSettingsCard.tsx",
-          "line": 116,
-          "column": 17
         }
       ]
     },
