@@ -160,7 +160,11 @@ impl ControlService {
         })
     }
 
-    pub(crate) fn inference(&self, invocation: ModelInvocation, cancellation: CancellationToken) -> crate::provider::ProviderStream {
+    pub(crate) fn inference(
+        &self,
+        invocation: ModelInvocation,
+        cancellation: CancellationToken,
+    ) -> crate::provider::ProviderStream {
         self.provider.stream(invocation, cancellation)
     }
 

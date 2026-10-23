@@ -55,10 +55,7 @@ pub async fn write_git_commit_message(
     generate_local(&registry, request, settings).await
 }
 
-async fn forward_direct(
-    upstream: CursorProxy,
-    request: Request<Body>,
-) -> Result<Response<Body>> {
+async fn forward_direct(upstream: CursorProxy, request: Request<Body>) -> Result<Response<Body>> {
     proxy::forward(Extension(upstream), request).await
 }
 

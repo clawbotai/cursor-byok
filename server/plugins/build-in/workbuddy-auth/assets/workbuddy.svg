@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="230" height="230" viewBox="0 0 230 230" xmlns="http://www.w3.org/2000/svg">
+  <title>workbuddy</title>
+  <rect x="22" y="21" width="187" height="187" rx="42" fill="#0052D9"/>
+  <path d="M62 78 L82 152 L96 104 L110 152 L130 78" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <circle cx="162" cy="84" r="10" fill="#FFFFFF"/>
+  <path d="M162 100 L162 152" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round"/>
+</svg>

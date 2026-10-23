@@ -1,8 +1,8 @@
 //! Exposes the local control API.
 mod calls;
 mod harness;
-mod models;
 mod model_api;
+mod models;
 mod overview;
 mod plugins;
 mod service;
