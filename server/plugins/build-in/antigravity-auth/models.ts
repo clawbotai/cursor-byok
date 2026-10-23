@@ -14,7 +14,7 @@ export const ANTIGRAVITY_ENDPOINTS = [
 
 const FETCH_AVAILABLE_MODELS_PATH = "/v1internal:fetchAvailableModels";
 export const ANTIGRAVITY_USER_AGENT =
-  "antigravity/hub/2.12.2 (aidev_client; os_type=darwin; arch=arm64; cl=975423596)";
+  "antigravity/hub/2.24.0 (aidev_client; os_type=darwin; arch=arm64)";
 
 export const ANTIGRAVITY_CLIENT_HEADERS: Record<string, string> = {};
 
