@@ -158,6 +158,10 @@ pub fn api_router(service: ControlService) -> Router {
             post(plugins::import),
         )
         .route(
+            "/__byok-api__/api/plugins/{plugin_id}/resources/{resource_type}/import-local",
+            post(plugins::import_local),
+        )
+        .route(
             "/__byok-api__/api/plugins/{plugin_id}/resources/{resource_type}/export",
             get(plugins::export_resources),
         )

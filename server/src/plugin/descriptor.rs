@@ -87,6 +87,8 @@ pub struct ImportDefinition {
     pub description: LocalizedText,
     pub accept: Vec<String>,
     pub multiple: bool,
+    #[serde(default)]
+    pub local_source: Option<super::local_import::LocalImportSource>,
 }
 
 pub const OAUTH2_ADD_METHOD: &str = "oauth2.0";
@@ -311,5 +313,21 @@ mod tests {
         );
         assert_eq!(parse_model_id("plugin:only/one"), None);
         assert_eq!(parse_model_id("model-hash"), None);
+    }
+
+    #[test]
+    fn local_import_source_is_declared_and_unknown_sources_are_rejected() {
+        let value = serde_json::json!({
+            "displayName": "从本机 DuMate 添加",
+            "accept": [], "multiple": false, "localSource": "dumate"
+        });
+        let definition: ImportDefinition = serde_json::from_value(value.clone()).unwrap();
+        assert_eq!(
+            serde_json::to_value(definition).unwrap()["localSource"],
+            "dumate"
+        );
+        let mut invalid = value;
+        invalid["localSource"] = serde_json::json!("arbitrary-file");
+        assert!(serde_json::from_value::<ImportDefinition>(invalid).is_err());
     }
 }

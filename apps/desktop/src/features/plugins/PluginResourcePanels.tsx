@@ -4,6 +4,7 @@ import {
   pluginText,
   type PluginAddMethod,
   type PluginDescriptor,
+  type PluginImportDescriptor,
   type PluginOAuthBegin,
   type PluginProviderDescriptor,
   type PluginResourceAction,
@@ -19,6 +20,7 @@ import { Card } from "../../shared/ui/Card";
 import { ConfirmDialog } from "../../shared/ui/ConfirmDialog";
 import { FormField, TextInput } from "../../shared/ui/FormControls";
 import { Modal } from "../../shared/ui/Modal";
+import { useMessage } from "../../shared/ui/message";
 import { Switch } from "../../shared/ui/Switch";
 import styles from "./PluginResourcePanels.module.scss";
 
@@ -49,7 +51,65 @@ function ResourceAddSection({ plugin, resource, onConfigured }: {
       method={method}
       onConfigured={onConfigured}
     />)}
+    {resource.import && <ResourceImportCard
+      pluginId={plugin.id}
+      resourceType={resource.type}
+      method={resource.import}
+      onConfigured={onConfigured}
+    />}
   </>;
+}
+
+function ResourceImportCard({ pluginId, resourceType, method, onConfigured }: {
+  pluginId: string;
+  resourceType: string;
+  method: PluginImportDescriptor;
+  onConfigured: () => void;
+}) {
+  const { locale } = useI18n();
+  const message = useMessage();
+  const input = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const importFiles = async (files: FileList | null) => {
+    if (!method.localSource && !files?.length) return;
+    setImporting(true);
+    setError(null);
+    try {
+      const result = method.localSource
+        ? await api.importPluginLocalResource(pluginId, resourceType)
+        : await api.importPluginResources(pluginId, resourceType, await Promise.all(
+          [...files!].map(async (file) => ({ name: file.name, content: await file.text() })),
+        ));
+      await appStore.refreshPlugins();
+      if (result.modelSyncError) {
+        setError(t("账号已保存，但同步模型失败：{error}", { error: result.modelSyncError }));
+        return;
+      }
+      const summary = t("导入完成：新增 {added}，更新 {updated}", { added: result.added, updated: result.updated });
+      message(result.warnings.length > 0 ? `${summary} · ${result.warnings.join("; ")}` : summary);
+      onConfigured();
+    } catch (cause) {
+      setError(errorText(cause));
+    } finally {
+      setImporting(false);
+      if (input.current) input.current.value = "";
+    }
+  };
+
+  return <Card className={styles.methodCard}>
+    <strong>{pluginText(method.displayName, locale)}</strong>
+    {method.description && <span>{pluginText(method.description, locale)}</span>}
+    <div className={styles.actions}>
+      <Button variant="primary" disabled={importing} onClick={() => method.localSource ? void importFiles(null) : input.current?.click()}>
+        {importing ? t("正在添加账号…") : method.localSource ? pluginText(method.displayName, locale) : t("导入")}
+      </Button>
+      {!method.localSource && <input ref={input} type="file" hidden accept={method.accept.join(",")} multiple={method.multiple}
+        onChange={(event) => void importFiles(event.target.files)} />}
+    </div>
+    {error && <span className={styles.error} role="alert">{error}</span>}
+  </Card>;
 }
 
 function OAuthMethodCard({ pluginId, resourceType, method, onConfigured }: {

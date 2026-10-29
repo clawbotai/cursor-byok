@@ -734,6 +734,22 @@ impl PluginRegistry {
         })
     }
 
+    pub async fn import_local_resources(
+        &self,
+        plugin_id: &str,
+        resource_type: &str,
+    ) -> Result<ImportResponse> {
+        let executable = self.executable()?;
+        let entry = self.find_entry(&executable, plugin_id).await?;
+        let source = find_resource(&entry, resource_type)?
+            .import
+            .as_ref()
+            .and_then(|import| import.local_source)
+            .ok_or_else(|| Error::Config("该账号不支持从本机添加".into()))?;
+        let files = super::local_import::files(source).await?;
+        self.import_resources(plugin_id, resource_type, files).await
+    }
+
     pub async fn import_resources(
         &self,
         plugin_id: &str,

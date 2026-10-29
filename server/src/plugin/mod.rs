@@ -6,6 +6,7 @@ mod data;
 mod definition;
 mod descriptor;
 mod installation;
+mod local_import;
 mod manifest;
 mod oauth_callback;
 mod protocol;

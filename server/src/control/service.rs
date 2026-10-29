@@ -194,6 +194,16 @@ impl ControlService {
         self.plugins.oauth_poll(session_id).await
     }
 
+    pub async fn plugin_import_local(
+        &self,
+        plugin_id: &str,
+        resource_type: &str,
+    ) -> Result<crate::plugin::ImportResponse> {
+        self.plugins
+            .import_local_resources(plugin_id, resource_type)
+            .await
+    }
+
     pub async fn plugin_import(
         &self,
         plugin_id: &str,

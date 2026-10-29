@@ -169,6 +169,8 @@ export type ResourceImportSupport = {
   /** 宿主文件选择器接受的扩展名,如 [".json"]。 */
   accept: string[];
   multiple?: boolean;
+  /** 由主程序从固定位置读取本机登录态，再交给 parse；凭证不经过界面。 */
+  localSource?: "dumate";
   parse(files: ResourceImportFile[], context: PluginContext): Promise<ResourceImportResult>;
 };
 

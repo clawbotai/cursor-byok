@@ -45,6 +45,17 @@ pub async fn oauth_poll(
     Ok(Json(service.plugin_oauth_poll(&session_id).await?))
 }
 
+pub async fn import_local(
+    State(service): State<ControlService>,
+    Path((plugin_id, resource_type)): Path<(String, String)>,
+) -> Result<Json<ImportResponse>> {
+    Ok(Json(
+        service
+            .plugin_import_local(&plugin_id, &resource_type)
+            .await?,
+    ))
+}
+
 pub async fn import(
     State(service): State<ControlService>,
     Path((plugin_id, resource_type)): Path<(String, String)>,

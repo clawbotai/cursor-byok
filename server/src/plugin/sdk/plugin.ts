@@ -97,6 +97,7 @@ export function __descriptor(definition: ProviderPluginDefinition) {
           description: resource.import.description ?? null,
           accept: resource.import.accept,
           multiple: resource.import.multiple ?? false,
+          localSource: resource.import.localSource ?? null,
         }
         : null,
       actions: (resource.actions ?? []).map((action) => ({

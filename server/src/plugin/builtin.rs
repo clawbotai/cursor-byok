@@ -220,11 +220,64 @@ const WORKBUDDY_AUTH: &[(&str, &str)] = &[
     ),
 ];
 
+const DUMATE_AUTH: &[(&str, &str)] = &[
+    (
+        "plugin.json",
+        include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/plugins/build-in/dumate-auth/plugin.json"
+        )),
+    ),
+    (
+        "main.ts",
+        include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/plugins/build-in/dumate-auth/main.ts"
+        )),
+    ),
+    (
+        "provider.ts",
+        include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/plugins/build-in/dumate-auth/provider.ts"
+        )),
+    ),
+    (
+        "models.ts",
+        include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/plugins/build-in/dumate-auth/models.ts"
+        )),
+    ),
+    (
+        "resources.ts",
+        include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/plugins/build-in/dumate-auth/resources.ts"
+        )),
+    ),
+    (
+        "README.md",
+        include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/plugins/build-in/dumate-auth/README.md"
+        )),
+    ),
+    (
+        "assets/dumate.svg",
+        include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/plugins/build-in/dumate-auth/assets/dumate.svg"
+        )),
+    ),
+];
+
 const PLUGINS: &[(&str, &[(&str, &str)])] = &[
     ("codex-auth", CODEX_AUTH),
     ("grok-auth", GROK_AUTH),
     ("antigravity-auth", ANTIGRAVITY_AUTH),
     ("workbuddy-auth", WORKBUDDY_AUTH),
+    ("dumate-auth", DUMATE_AUTH),
 ];
 
 /// 把内置插件预装到 installed 目录。manifest 的 version 是缓存键:
@@ -313,6 +366,25 @@ mod tests {
             .find(|(name, _)| *name == "main.ts")
             .unwrap()
             .1
+    }
+
+    #[test]
+    fn install_includes_dumate_provider_without_manual_exporter() {
+        let root = tempfile::tempdir().unwrap();
+        install(root.path()).unwrap();
+        let plugin = root.path().join("dumate-auth");
+        for file in [
+            "plugin.json",
+            "main.ts",
+            "provider.ts",
+            "models.ts",
+            "resources.ts",
+            "README.md",
+            "assets/dumate.svg",
+        ] {
+            assert!(plugin.join(file).is_file(), "missing DuMate file: {file}");
+        }
+        assert!(!plugin.join("export-session.mjs").exists());
     }
 
     #[test]

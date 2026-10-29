@@ -1,0 +1,16 @@
+{
+  "apiVersion": 1,
+  "id": "dev.cursorbyok.plugins.dumate-auth",
+  "name": "DuMate",
+  "version": "0.2.0",
+  "author": "@leookun",
+  "minAppVersion": "1.1.2",
+  "icon": "assets/dumate.svg",
+  "entry": "main.ts",
+  "permissions": {
+    "network": [
+      "zhongzhi.dumate.cn",
+      "dumate-svc.baidu.com"
+    ]
+  }
+}
