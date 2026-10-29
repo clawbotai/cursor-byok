@@ -9,7 +9,7 @@ import type {
   StatisticsStorage,
 } from "../shared/api";
 
-const API_ROOT = "/__byok-api__/api";
+const API_ROOT = "/__call-details__/api";
 const FIXED_NOW = Date.UTC(2026, 7, 27, 8, 0, 0);
 
 const models: Model[] = [

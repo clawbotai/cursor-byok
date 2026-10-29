@@ -1,4 +1,4 @@
-module github.com/leookun/cursor-byok/cursor-proto
+module github.com/clawbotai/cursor-byok/support/cursor-protocol-extractor
 
 go 1.25.8
 

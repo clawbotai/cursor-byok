@@ -29,7 +29,7 @@ pub use service::{
 pub fn web_router(service: ControlService, assets: impl AsRef<std::path::Path>) -> Router {
     Router::new()
         .nest_service(
-            "/__byok-api__",
+            "/__call-details__",
             ServeDir::new(assets).append_index_html_on_directories(true),
         )
         .merge(api_router(service))
@@ -45,8 +45,8 @@ fn frontend_proxy_router(target: Url) -> Router {
         target: target.as_str().trim_end_matches('/').to_string(),
     };
     Router::new()
-        .route("/__byok-api__/", any(proxy_frontend))
-        .route("/__byok-api__/{*path}", any(proxy_frontend))
+        .route("/__call-details__/", any(proxy_frontend))
+        .route("/__call-details__/{*path}", any(proxy_frontend))
         .with_state(state)
 }
 
@@ -65,7 +65,7 @@ async fn proxy_frontend(
         .uri
         .path_and_query()
         .map(|value| value.as_str())
-        .unwrap_or("/__byok-api__/");
+        .unwrap_or("/__call-details__/");
     let mut upstream = proxy
         .client
         .request(parts.method, format!("{}{path}", proxy.target));
@@ -114,115 +114,115 @@ pub fn api_router(service: ControlService) -> Router {
         .route("/v1/models", get(model_api::list))
         .route("/v1/chat/completions", post(model_api::chat))
         .route(
-            "/__byok-api__/api/models",
+            "/__call-details__/api/models",
             get(models::list).post(models::create),
         )
-        .route("/__byok-api__/api/models/discover", post(models::discover))
+        .route("/__call-details__/api/models/discover", post(models::discover))
         .route(
-            "/__byok-api__/api/models/import-v0049",
+            "/__call-details__/api/models/import-v0049",
             get(models::preview_v0049).post(models::import_v0049),
         )
-        .route("/__byok-api__/api/models/order", put(models::reorder))
-        .route("/__byok-api__/api/overview", get(overview::get))
+        .route("/__call-details__/api/models/order", put(models::reorder))
+        .route("/__call-details__/api/overview", get(overview::get))
         .route(
-            "/__byok-api__/api/models/{model_hash}",
+            "/__call-details__/api/models/{model_hash}",
             put(models::update).delete(models::remove),
         )
         .route(
-            "/__byok-api__/api/models/{model_hash}/test/{test_id}",
+            "/__call-details__/api/models/{model_hash}/test/{test_id}",
             post(models::test).delete(models::cancel),
         )
-        .route("/__byok-api__/api/llm-calls", get(calls::list))
-        .route("/__byok-api__/api/llm-calls/{call_id}", get(calls::detail))
-        .route("/__byok-api__/api/plugins", get(plugins::list))
+        .route("/__call-details__/api/llm-calls", get(calls::list))
+        .route("/__call-details__/api/llm-calls/{call_id}", get(calls::detail))
+        .route("/__call-details__/api/plugins", get(plugins::list))
         .route(
-            "/__byok-api__/api/plugins/runtime",
+            "/__call-details__/api/plugins/runtime",
             get(plugins::runtime_status)
                 .post(plugins::initialize_runtime)
                 .delete(plugins::cancel_runtime_initialization),
         )
         .route(
-            "/__byok-api__/api/plugins/oauth/{session_id}/poll",
+            "/__call-details__/api/plugins/oauth/{session_id}/poll",
             post(plugins::oauth_poll),
         )
         .route(
-            "/__byok-api__/api/plugins/{plugin_id}",
+            "/__call-details__/api/plugins/{plugin_id}",
             axum::routing::delete(plugins::remove),
         )
         .route(
-            "/__byok-api__/api/plugins/{plugin_id}/resources/{resource_type}/add/{method_id}/begin",
+            "/__call-details__/api/plugins/{plugin_id}/resources/{resource_type}/add/{method_id}/begin",
             post(plugins::oauth_begin),
         )
         .route(
-            "/__byok-api__/api/plugins/{plugin_id}/resources/{resource_type}/import",
+            "/__call-details__/api/plugins/{plugin_id}/resources/{resource_type}/import",
             post(plugins::import),
         )
         .route(
-            "/__byok-api__/api/plugins/{plugin_id}/resources/{resource_type}/import-local",
+            "/__call-details__/api/plugins/{plugin_id}/resources/{resource_type}/import-local",
             post(plugins::import_local),
         )
         .route(
-            "/__byok-api__/api/plugins/{plugin_id}/resources/{resource_type}/export",
+            "/__call-details__/api/plugins/{plugin_id}/resources/{resource_type}/export",
             get(plugins::export_resources),
         )
         .route(
-            "/__byok-api__/api/plugins/{plugin_id}/resources/{resource_type}/{resource_id}",
+            "/__call-details__/api/plugins/{plugin_id}/resources/{resource_type}/{resource_id}",
             axum::routing::delete(plugins::delete_resource),
         )
         .route(
-            "/__byok-api__/api/plugins/{plugin_id}/resources/{resource_type}/{resource_id}/actions/{action_id}",
+            "/__call-details__/api/plugins/{plugin_id}/resources/{resource_type}/{resource_id}/actions/{action_id}",
             post(plugins::action),
         )
         .route(
-            "/__byok-api__/api/plugins/{plugin_id}/resources/{resource_type}/{resource_id}/refresh",
+            "/__call-details__/api/plugins/{plugin_id}/resources/{resource_type}/{resource_id}/refresh",
             post(plugins::refresh_resource),
         )
         .route(
-            "/__byok-api__/api/plugins/{plugin_id}/providers/{provider_id}/models/sync",
+            "/__call-details__/api/plugins/{plugin_id}/providers/{provider_id}/models/sync",
             post(plugins::sync_models),
         )
         .route(
-            "/__byok-api__/api/plugins/{plugin_id}/providers/{provider_id}/models/enabled",
+            "/__call-details__/api/plugins/{plugin_id}/providers/{provider_id}/models/enabled",
             put(plugins::set_model_enabled),
         )
         .route(
-            "/__byok-api__/api/settings/observability",
+            "/__call-details__/api/settings/observability",
             get(settings::get).put(settings::update),
         )
         .route(
-            "/__byok-api__/api/settings/ports",
+            "/__call-details__/api/settings/ports",
             get(settings::get_ports).put(settings::update_ports),
         )
         .route(
-            "/__byok-api__/api/settings/storage/statistics",
+            "/__call-details__/api/settings/storage/statistics",
             get(settings::get_storage).delete(settings::clear_storage),
         )
         .route(
-            "/__byok-api__/api/settings/proxy",
+            "/__call-details__/api/settings/proxy",
             get(settings::get_proxy).put(settings::update_proxy),
         )
         .route(
-            "/__byok-api__/api/settings/desktop",
+            "/__call-details__/api/settings/desktop",
             get(settings::get_desktop).put(settings::update_desktop),
         )
         .route(
-            "/__byok-api__/api/settings/commit",
+            "/__call-details__/api/settings/commit",
             get(settings::get_commit).put(settings::update_commit),
         )
         .route(
-            "/__byok-api__/api/settings/pricing",
+            "/__call-details__/api/settings/pricing",
             get(settings::get_pricing_settings).put(settings::update_pricing_settings),
         )
         .route(
-            "/__byok-api__/api/harness/cursor/status",
+            "/__call-details__/api/harness/cursor/status",
             get(harness::status),
         )
         .route(
-            "/__byok-api__/api/harness/cursor/ca/initialize",
+            "/__call-details__/api/harness/cursor/ca/initialize",
             post(harness::initialize_ca),
         )
         .route(
-            "/__byok-api__/api/harness/cursor/enabled",
+            "/__call-details__/api/harness/cursor/enabled",
             put(harness::set_enabled),
         )
         .with_state(service)

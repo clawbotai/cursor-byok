@@ -9,8 +9,6 @@ import {
   writeDockIconVisibility,
   writeSilentStart,
 } from "../../shared/native/appLifecycle";
-import { updateStore, useUpdateStore } from "../../shared/store/updateStore";
-import { Button } from "../../shared/ui/Button";
 import { Switch } from "../../shared/ui/Switch";
 import { TitledCard } from "../../shared/ui/TitledCard";
 import { useMessage } from "../../shared/ui/message";
@@ -20,7 +18,6 @@ export function AppLifecycleSettingsCard() {
   const message = useMessage();
   const native = hasNativeAppLifecycle();
   const dockVisibilitySetting = hasDockVisibilitySetting();
-  const { availableVersion, checking, installing } = useUpdateStore();
   const [version, setVersion] = useState("…");
   const [autostart, setAutostart] = useState(false);
   const [loadingAutostart, setLoadingAutostart] = useState(native);
@@ -90,25 +87,6 @@ export function AppLifecycleSettingsCard() {
     }
   };
 
-  const checkUpdate = async () => {
-    try {
-      const nextVersion = await updateStore.check();
-      message(nextVersion ? t("发现新版本 {version}", { version: nextVersion }) : t("当前已是最新版本"));
-    } catch (cause) {
-      const error = cause instanceof Error ? cause.message : String(cause);
-      message(t("检查更新失败：{error}", { error }));
-    }
-  };
-
-  const updateNow = async () => {
-    try {
-      await updateStore.install();
-    } catch (cause) {
-      const error = cause instanceof Error ? cause.message : String(cause);
-      message(t("安装更新失败：{error}", { error }));
-    }
-  };
-
   return <TitledCard title={t("应用设置")}>
     <div className={styles.row}>
       <div>
@@ -148,19 +126,8 @@ export function AppLifecycleSettingsCard() {
     </div>}
     <div className={styles.row}>
       <div>
-        <strong>{t("软件更新")}</strong>
-        <small>{availableVersion
-          ? t("版本 {version} 可以安装", { version: availableVersion })
-          : t("当前版本 {version}", { version })}</small>
+        <strong>{t("当前版本 {version}", { version })}</strong>
       </div>
-      {availableVersion
-        ? <Button size="small" variant="primary" disabled={installing} onClick={() => void updateNow()}>
-            {installing ? t("安装中…") : t("下载并安装")}
-            <span className={styles.updateDot} aria-hidden="true" />
-          </Button>
-        : <Button size="small" disabled={!native || checking} onClick={() => void checkUpdate()}>
-            {checking ? t("检查中…") : t("检查更新")}
-          </Button>}
     </div>
   </TitledCard>;
 }

@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPOSITORY_DIR="$(cd "$PROJECT_DIR/../.." && pwd)"
 PROTO_DIR="$REPOSITORY_DIR/protocols/cursor"
-MODULE_PATH="github.com/leookun/cursor-byok/cursor-proto"
+MODULE_PATH="github.com/clawbotai/cursor-byok/support/cursor-protocol-extractor"
 
 command -v protoc >/dev/null 2>&1 || {
   echo "protoc is required" >&2

@@ -45,7 +45,7 @@ fn router_with_proxy(
     let web_cache = registry.web_cache().router();
     let free_entitlements = FreeEntitlementCache::default();
     Router::new()
-        .route("/__byok-api__/healthz", get(health))
+        .route("/__call-details__/healthz", get(health))
         .route("/agent.v1.AgentService/RunSSE", post(run_sse_handler))
         .route("/aiserver.v1.BidiService/BidiAppend", post(bidi_handler))
         .route(

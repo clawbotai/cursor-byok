@@ -436,7 +436,7 @@ export interface CallDetail {
 const packagedDesktop = "__TAURI_INTERNALS__" in window
   || window.location.protocol === "tauri:"
   || window.location.hostname === "tauri.localhost";
-const API_ROOT = "/__byok-api__/api";
+const API_ROOT = "/__call-details__/api";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response;

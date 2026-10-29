@@ -4,12 +4,7 @@
 
 cursor-byok 是一个运行在本机的 Cursor 模型网关，帮助你在 Cursor 中使用自己配置的模型服务。
 
-[English README](./README.md) · [使用指南](https://docs.leokun.cn) · [下载](https://github.com/leookun/cursor-byok/releases/latest) · [提交问题](https://github.com/leookun/cursor-byok/issues)
-
-[![Release](https://img.shields.io/github/v/release/leookun/cursor-byok?style=flat-square)](https://github.com/leookun/cursor-byok/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/leookun/cursor-byok/total?style=flat-square)](https://github.com/leookun/cursor-byok/releases)
-[![License](https://img.shields.io/github/license/leookun/cursor-byok?style=flat-square)](./LICENSE)
-[![Platforms](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey?style=flat-square)](https://github.com/leookun/cursor-byok/releases/latest)
+[English README](./README.md) · [下载](https://github.com/clawbotai/cursor-byok/releases/latest) · [提交问题](https://github.com/clawbotai/cursor-byok/issues)
 
 </div>
 
@@ -39,13 +34,11 @@ cursor-byok 是一个开源的本地模型网关。它在你的设备上运行�
 
 ## 快速开始
 
-1. 从 [GitHub Releases](https://github.com/leookun/cursor-byok/releases/latest) 下载适合你操作系统的最新版本。
+1. 从 [GitHub Releases](https://github.com/clawbotai/cursor-byok/releases/latest) 下载适合你操作系统的最新版本。
 2. 启动 cursor-byok，打开 **Cursor 配置**，按提示初始化本地 CA（证书颁发机构）。
 3. 在模型设置中添加模型，填写服务地址、API Key 和模型名称，然后保存并运行 **测试**。
 4. 确认测试通过后，保持 cursor-byok 运行。
 5. **首次升级 Cursor 或首次配置模型后，完全退出并重新启动 Cursor，然后新开一个对话**。在模型列表中选择已配置的模型，开始使用 Agent。
-
-完整的安装步骤、配置说明和常见问题，请参阅[中文使用指南](https://docs.leokun.cn/zh/docs)。
 
 > [!TIP]
 > 首次升级 Cursor 或首次完成配置后，必须完全退出并重新启动 Cursor，再新开一个对话。配置前已经打开的对话不会加载新连接；使用自定义模型时，请在模型列表中手动选择该模型，不要选择 **Auto**。
@@ -84,9 +77,9 @@ GPT 系列建议使用 **Responses API**。如果使用 Chat Completions，可�
 
 Cursor 的 Tab 补全由独立的 TAB 服务处理，不经过模型通道。你可以在 **系统设置 → TAB 设置** 中选择以下模式：
 
-- **使用公益服务（默认）**：使用项目作者部署的公共服务，无需额外配置。
+- **使用公益服务（默认）**：使用预设的公共 TAB 服务，无需额外配置。
 - **直连**：直接连接当前 Cursor 账号对应的官方 TAB 服务，适合账号拥有官方额度的情况。
-- **自定义**：自行部署 [`cursor-tab-server`](https://github.com/leookun/cursor-byok/tree/archive/v0.0.49/cursor-tab-server)，然后填写 TAB 服务地址。
+- **自定义**：自行部署 TAB 补全服务，然后填写 TAB 服务地址。
 
 修改 TAB 设置后，建议重启 Cursor 并新开一个对话，确保新的连接方式生效。
 
@@ -205,14 +198,9 @@ make build-docker    # 构建 Docker 镜像
 
 项目将继续改进模型兼容性、Agent 工具、本地运行稳定性和自托管体验，并探索支持更多 IDE、聊天和 Agent 工作流。
 
-计划与进展请参阅[发布路线图](https://github.com/leookun/cursor-byok/discussions/32)。
-
 ## 社区与反馈
 
-- [中文使用指南](https://docs.leokun.cn/zh/docs)
-- [GitHub Issues](https://github.com/leookun/cursor-byok/issues)
-- [Telegram 社区](https://t.me/cursor_byok)
-- QQ 群：`1095916242`、`1094411438`、`1095918002`、`1094419321`
+- [GitHub Issues](https://github.com/clawbotai/cursor-byok/issues)
 
 提交问题时，请附上操作系统、cursor-byok 版本、模型类型、请求协议、已脱敏的服务地址、错误信息和复现步骤。请勿公开 API Key 或其他凭据。
 

@@ -47,5 +47,5 @@ USER cursor-byok
 EXPOSE 3000
 VOLUME ["/data"]
 HEALTHCHECK --interval=10s --timeout=3s --retries=5 \
-    CMD curl --fail --silent http://127.0.0.1:3000/__byok-api__/healthz || exit 1
+    CMD curl --fail --silent http://127.0.0.1:3000/__call-details__/healthz || exit 1
 ENTRYPOINT ["/usr/local/bin/cursor-server"]

@@ -5,18 +5,18 @@ description: Implement and review the Cursor BYOK React/Tauri desktop frontend. 
 
 # Cursor BYOK Frontend
 
-Build on the components and theme system already present in `apps/desktop`. Preserve the Tauri HTTP boundary; frontend management features call `/__byok-api__/api` and never add IPC business APIs.
+Build on the components and theme system already present in `apps/desktop`. Preserve the Tauri HTTP boundary; frontend management features call `/__call-details__/api` and never add IPC business APIs.
 
 ## Desktop HTTP communication
 
-- Treat the Rust management server as the single HTTP origin for the desktop UI. The main WebView and browser-opened detail pages must use `http://127.0.0.1:<dynamic-port>/__byok-api__/`; do not load the main UI from `tauri://localhost` or expose a second frontend origin.
-- Make every frontend management request relative to `/__byok-api__/api`. Do not discover, inject, persist, or pass an `apiOrigin`, and do not construct management URLs from a fixed port.
-- Keep the `/__byok-api__/` namespace reserved for this boundary:
-  - `/__byok-api__/api/*` is handled locally by the Rust management API.
-  - Other `/__byok-api__/*` paths are frontend documents, assets, modules, and development resources.
+- Treat the Rust management server as the single HTTP origin for the desktop UI. The main WebView and browser-opened detail pages must use `http://127.0.0.1:<dynamic-port>/__call-details__/`; do not load the main UI from `tauri://localhost` or expose a second frontend origin.
+- Make every frontend management request relative to `/__call-details__/api`. Do not discover, inject, persist, or pass an `apiOrigin`, and do not construct management URLs from a fixed port.
+- Keep the `/__call-details__/` namespace reserved for this boundary:
+  - `/__call-details__/api/*` is handled locally by the Rust management API.
+  - Other `/__call-details__/*` paths are frontend documents, assets, modules, and development resources.
 - In production, serve the frontend embedded by Tauri's `frontendDist` through the Rust server. Reuse Tauri's asset resolver rather than bundling or copying a second set of frontend resources.
-- In development, let the Rust server reverse-proxy non-API `/__byok-api__/*` requests to Vite. Preserve the request path and query string. Do not configure Vite to proxy management API requests back to Rust.
-- Configure Vite's base path as `/__byok-api__/` so generated assets, module imports, and development client URLs stay under the reserved namespace.
+- In development, let the Rust server reverse-proxy non-API `/__call-details__/*` requests to Vite. Preserve the request path and query string. Do not configure Vite to proxy management API requests back to Rust.
+- Configure Vite's base path as `/__call-details__/` so generated assets, module imports, and development client URLs stay under the reserved namespace.
 - Bind the development Vite server to an explicit loopback address compatible with the Rust proxy target; do not rely on `localhost` resolving to the same IP family.
 - Open external detail pages with their normal loopback HTTP URL and hash route. Because the page and API are same-origin, do not add Tauri URL workarounds, API-origin query parameters, or CORS-dependent browser flows.
 - Use Tauri commands only for native desktop capabilities such as opening Terminal, tray integration, or operating-system actions. Do not create IPC mirrors for HTTP business APIs.

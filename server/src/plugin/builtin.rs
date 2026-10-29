@@ -388,6 +388,36 @@ mod tests {
     }
 
     #[test]
+    fn upgrade_replaces_installed_manifests_from_before_author_cleanup() {
+        let root = tempfile::tempdir().unwrap();
+        install(root.path()).unwrap();
+        for (name, previous_version) in [
+            ("codex-auth", "0.1.7"),
+            ("grok-auth", "0.1.7"),
+            ("antigravity-auth", "0.1.13"),
+            ("workbuddy-auth", "0.1.0"),
+            ("dumate-auth", "0.2.0"),
+        ] {
+            let path = root.path().join(name).join("plugin.json");
+            let mut manifest: serde_json::Value =
+                serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+            manifest["version"] = previous_version.into();
+            manifest["author"] = "Previous author".into();
+            std::fs::write(&path, manifest.to_string()).unwrap();
+        }
+
+        install(root.path()).unwrap();
+        for (name, files) in PLUGINS {
+            let manifest: serde_json::Value = serde_json::from_slice(
+                &std::fs::read(root.path().join(name).join("plugin.json")).unwrap(),
+            )
+            .unwrap();
+            assert!(manifest.get("author").is_none(), "{name}");
+            assert_eq!(manifest["version"], embedded_version(files).unwrap());
+        }
+    }
+
+    #[test]
     fn install_is_version_gated_and_syncs_on_version_change() {
         let root = tempfile::tempdir().unwrap();
         let plugin = root.path().join("codex-auth");

@@ -11,15 +11,15 @@ use tauri::AppHandle;
 
 pub(crate) fn router(app: AppHandle) -> Router {
     Router::new()
-        .route("/__byok-api__/", get(asset))
-        .route("/__byok-api__/{*path}", get(asset))
+        .route("/__call-details__/", get(asset))
+        .route("/__call-details__/{*path}", get(asset))
         .with_state(app)
 }
 
 async fn asset(State(app): State<AppHandle>, uri: Uri) -> Response<Body> {
     let path = uri
         .path()
-        .strip_prefix("/__byok-api__/")
+        .strip_prefix("/__call-details__/")
         .filter(|path| !path.is_empty())
         .unwrap_or("index.html");
     let Some(asset) = app.asset_resolver().get(path.to_string()) else {
